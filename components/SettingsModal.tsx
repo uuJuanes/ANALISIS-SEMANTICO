@@ -89,14 +89,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               className="mt-1 block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-brand-primary focus:border-brand-primary sm:text-sm bg-slate-50 dark:bg-slate-800"
               placeholder="Ej: 500000"
             />
-             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Define un límite para monitorear tu consumo, especialmente con OpenRouter.</p>
+             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Define un límite para monitorear tu consumo.</p>
           </div>
           <p className="text-sm text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-200 dark:border-slate-700">
-            Gemini funciona sin necesidad de clave. Para usar DeepSeek o ChatGPT, necesitas una clave de <a href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer" className="text-brand-primary hover:underline font-medium">OpenRouter</a>.
+            Gemini funciona sin necesidad de clave. Para usar DeepSeek o ChatGPT, necesitas sus respectivas claves de API oficiales.
           </p>
           <div>
             <label htmlFor="deepseek-key" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-              Clave API de DeepSeek (via OpenRouter)
+              Clave API de DeepSeek
             </label>
             <input
               id="deepseek-key"
@@ -104,12 +104,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               value={localKeys.deepseek}
               onChange={(e) => setLocalKeys({ ...localKeys, deepseek: e.target.value })}
               className="mt-1 block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-brand-primary focus:border-brand-primary sm:text-sm bg-slate-50 dark:bg-slate-800"
-              placeholder="Pega tu clave de OpenRouter aquí"
+              placeholder="Pega tu clave de DeepSeek aquí"
             />
           </div>
           <div>
             <label htmlFor="openai-key" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-              Clave API de ChatGPT (via OpenRouter)
+              Clave API de OpenAI (ChatGPT)
             </label>
             <input
               id="openai-key"
@@ -117,7 +117,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({
               value={localKeys.openai}
               onChange={(e) => setLocalKeys({ ...localKeys, openai: e.target.value })}
               className="mt-1 block w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md shadow-sm focus:ring-brand-primary focus:border-brand-primary sm:text-sm bg-slate-50 dark:bg-slate-800"
-              placeholder="Pega tu clave de OpenRouter aquí"
+              placeholder="Pega tu clave de OpenAI aquí"
             />
           </div>
         </div>

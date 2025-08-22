@@ -2,7 +2,7 @@ import { AnalysisResult, PersuasionScores, ChatMessage, RolePlayAnalysisResult, 
 import { bancolombiaProductData } from '../config/productData';
 import { bancolombiaFaqData } from '../config/faqData';
 
-const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 
 const getProductDetailsByName = (productName: string): string => {
     for (const category of bancolombiaProductData) {
@@ -14,14 +14,12 @@ const getProductDetailsByName = (productName: string): string => {
     return `Detalles específicos no encontrados para '${productName}'. El asesor debe usar su conocimiento general sobre productos de Bancolombia.`;
 };
 
-const getOpenRouterHeaders = (apiKey: string) => ({
+const getDeepSeekHeaders = (apiKey: string) => ({
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${apiKey}`,
-    'HTTP-Referer': 'https://stackblitz.com/', // Required by OpenRouter for identification
-    'X-Title': 'Analizador de Ventas IA', // Recommended by OpenRouter
 });
 
-const mapOpenRouterUsage = (usage: any): TokenUsage => ({
+const mapApiUsage = (usage: any): TokenUsage => ({
     promptTokens: usage.prompt_tokens || 0,
     completionTokens: usage.completion_tokens || 0,
     totalTokens: usage.total_tokens || 0,
@@ -34,11 +32,11 @@ async function callDeepSeekAPI(apiKey: string, prompt: string, systemPrompt: str
     }
     messages.push({ role: 'user', content: prompt });
 
-    const response = await fetch(OPENROUTER_API_URL, {
+    const response = await fetch(DEEPSEEK_API_URL, {
         method: 'POST',
-        headers: getOpenRouterHeaders(apiKey),
+        headers: getDeepSeekHeaders(apiKey),
         body: JSON.stringify({
-            model: 'deepseek/deepseek-chat',
+            model: 'deepseek-chat',
             messages: messages,
             response_format: { type: 'json_object' },
             max_tokens: maxTokens,
@@ -48,20 +46,20 @@ async function callDeepSeekAPI(apiKey: string, prompt: string, systemPrompt: str
 
     if (!response.ok) {
         const errorData = await response.json();
-        console.error("OpenRouter (DeepSeek) API Error:", errorData);
-        throw new Error(`Error de la API de OpenRouter: ${errorData.error?.message || response.statusText}`);
+        console.error("DeepSeek API Error:", errorData);
+        throw new Error(`Error de la API de DeepSeek: ${errorData.error?.message || response.statusText}`);
     }
 
     const data = await response.json();
-    const tokenUsage = mapOpenRouterUsage(data.usage);
+    const tokenUsage = mapApiUsage(data.usage);
     const jsonString = data.choices[0].message.content;
     
     try {
         const cleanedString = jsonString.replace(/^```json\s*/, '').replace(/\s*```$/, '').trim();
         return { data: JSON.parse(cleanedString), tokenUsage };
     } catch(e) {
-        console.error("Failed to parse JSON from OpenRouter (DeepSeek):", jsonString);
-        throw new Error("La respuesta de la IA (DeepSeek via OpenRouter) no era un JSON válido.");
+        console.error("Failed to parse JSON from DeepSeek:", jsonString);
+        throw new Error("La respuesta de la IA (DeepSeek) no era un JSON válido.");
     }
 }
 
@@ -72,22 +70,22 @@ async function callDeepSeekTextAPI(apiKey: string, prompt: string, systemPrompt?
     }
     messages.push({ role: 'user', content: prompt });
     
-    const response = await fetch(OPENROUTER_API_URL, {
+    const response = await fetch(DEEPSEEK_API_URL, {
         method: 'POST',
-        headers: getOpenRouterHeaders(apiKey),
+        headers: getDeepSeekHeaders(apiKey),
         body: JSON.stringify({
-            model: 'deepseek/deepseek-chat',
+            model: 'deepseek-chat',
             messages: messages,
             max_tokens: 750
         })
     });
      if (!response.ok) {
         const errorData = await response.json();
-        console.error("OpenRouter (DeepSeek) API Error:", errorData);
-        throw new Error(`Error de la API de OpenRouter: ${errorData.error?.message || response.statusText}`);
+        console.error("DeepSeek API Error:", errorData);
+        throw new Error(`Error de la API de DeepSeek: ${errorData.error?.message || response.statusText}`);
     }
     const data = await response.json();
-    const tokenUsage = mapOpenRouterUsage(data.usage);
+    const tokenUsage = mapApiUsage(data.usage);
     return { data: data.choices[0].message.content, tokenUsage };
 }
 
@@ -347,22 +345,22 @@ Responde siempre en español, de manera concisa y conversacional (1-3 frases).`;
         content: msg.text
     }));
     
-     const response = await fetch(OPENROUTER_API_URL, {
+     const response = await fetch(DEEPSEEK_API_URL, {
         method: 'POST',
-        headers: getOpenRouterHeaders(apiKey),
+        headers: getDeepSeekHeaders(apiKey),
         body: JSON.stringify({
-            model: 'deepseek/deepseek-chat',
+            model: 'deepseek-chat',
             messages: [{role: 'system', content: systemInstruction}, ...messages],
             max_tokens: 256
         })
     });
      if (!response.ok) {
         const errorData = await response.json();
-        console.error("OpenRouter (DeepSeek) API Error:", errorData);
-        throw new Error(`Error de la API de OpenRouter: ${errorData.error?.message || response.statusText}`);
+        console.error("DeepSeek API Error:", errorData);
+        throw new Error(`Error de la API de DeepSeek: ${errorData.error?.message || response.statusText}`);
     }
     const data = await response.json();
-    const tokenUsage = mapOpenRouterUsage(data.usage);
+    const tokenUsage = mapApiUsage(data.usage);
     return { data: data.choices[0].message.content, tokenUsage };
 };
 

@@ -93,6 +93,7 @@ interface AudioInputProps {
     onGenerateCaseStudy: (problemType: string, userNotes: string) => void;
     onGetRolePlayResponse: (history: ChatMessage[], clientProfile: string, product: string) => Promise<string>;
     onGetRolePlayMultipleChoiceTurn: (history: ChatMessage[], clientProfile: string, product: string) => Promise<RolePlayTurn>;
+    onQueryKnowledgeBase: (query: string) => Promise<string>;
     onRolePlayStart: (clientName: string) => void;
     isLoading: boolean;
     initialText: string;
@@ -107,6 +108,12 @@ const CaseStudyIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 );
 const MicIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}><path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m12 5.25v1.5a6 6 0 01-12 0v-1.5m6-13.5a3 3 0 013 3v6a3 3 0 01-6 0v-6a3 3 0 013-3z" /></svg>
+);
+const KnowledgeBaseIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442m-3.518-3.712a2.25 2.25 0 00-2.223 2.223c0 .317.079.623.223.896M12 12.75h.008v.008H12v-.008z" />
+  </svg>
 );
 const AiIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -159,8 +166,8 @@ const TabButton: React.FC<{ icon: React.ReactNode; label: string; isActive: bool
     </div>
 );
 
-const AudioInput: React.FC<AudioInputProps> = ({ aiProvider, onAnalyze, onGenerateScript, onGenerateCaseStudy, onGetRolePlayResponse, onGetRolePlayMultipleChoiceTurn, onRolePlayStart, isLoading, initialText, checkApiKey }) => {
-    const [activeTab, setActiveTab] = useState<'text' | 'create' | 'scenario' | 'roleplay' | 'audio'>('text');
+const AudioInput: React.FC<AudioInputProps> = ({ aiProvider, onAnalyze, onGenerateScript, onGenerateCaseStudy, onGetRolePlayResponse, onGetRolePlayMultipleChoiceTurn, onQueryKnowledgeBase, onRolePlayStart, isLoading, initialText, checkApiKey }) => {
+    const [activeTab, setActiveTab] = useState<'text' | 'create' | 'scenario' | 'roleplay' | 'audio' | 'knowledge'>('text');
     const [text, setText] = useState<string>(initialText);
     const [audioFile, setAudioFile] = useState<File | null>(null);
     const [isRecording, setIsRecording] = useState<boolean>(false);
@@ -181,6 +188,10 @@ const AudioInput: React.FC<AudioInputProps> = ({ aiProvider, onAnalyze, onGenera
     const [problemType, setProblemType] = useState(COMMON_PROBLEMS[0]);
     const [userNotes, setUserNotes] = useState('');
 
+    // --- Knowledge Base state ---
+    const [kbQuery, setKbQuery] = useState('');
+    const [kbAnswer, setKbAnswer] = useState<string | null>(null);
+    const [isQueryingKB, setIsQueryingKB] = useState(false);
 
     // --- Role-play state ---
     const [rolePlayStatus, setRolePlayStatus] = useState<'setup' | 'active' | 'analyzing'>('setup');
@@ -432,6 +443,20 @@ const AudioInput: React.FC<AudioInputProps> = ({ aiProvider, onAnalyze, onGenera
         onGenerateCaseStudy(problemType, userNotes);
     };
 
+    const handleKbQuery = async () => {
+        if (!kbQuery.trim()) return;
+        setIsQueryingKB(true);
+        setKbAnswer(null);
+        try {
+            const result = await onQueryKnowledgeBase(kbQuery);
+            setKbAnswer(result);
+        } catch (e) {
+            setKbAnswer(`Ocurrió un error: ${e instanceof Error ? e.message : String(e)}`);
+        } finally {
+            setIsQueryingKB(false);
+        }
+    };
+
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
             setAudioFile(event.target.files[0]);
@@ -495,6 +520,7 @@ const AudioInput: React.FC<AudioInputProps> = ({ aiProvider, onAnalyze, onGenera
     const isAnalyzeDisabled = isLoading || (activeTab === 'text' && !text.trim()) || (activeTab === 'audio' && !audioFile);
     const isAudioDisabled = aiProvider !== 'gemini';
     const isScenarioGenDisabled = aiProvider !== 'gemini';
+    const isKnowledgeBaseDisabled = aiProvider !== 'gemini';
     
     const formatTime = (seconds: number) => {
         const minutes = Math.floor(seconds / 60);
@@ -507,6 +533,7 @@ const AudioInput: React.FC<AudioInputProps> = ({ aiProvider, onAnalyze, onGenera
             <div className="flex border-b border-slate-200 dark:border-slate-700 overflow-x-auto">
                 <TabButton icon={<TextIcon className="h-5 w-5"/>} label="Analizar Texto" isActive={activeTab === 'text'} onClick={() => setActiveTab('text')} />
                 <TabButton icon={<WandIcon className="h-5 w-5"/>} label="Crear Guion" isActive={activeTab === 'create'} onClick={() => setActiveTab('create')} />
+                <TabButton icon={<KnowledgeBaseIcon className="h-5 w-5"/>} label="Base de Conocimiento" isActive={activeTab === 'knowledge'} onClick={() => setActiveTab('knowledge')} disabled={isKnowledgeBaseDisabled} disabledTooltip="Función disponible solo con Gemini." />
                 <TabButton icon={<CaseStudyIcon className="h-5 w-5"/>} label="Generar Escenario" isActive={activeTab === 'scenario'} onClick={() => setActiveTab('scenario')} disabled={isScenarioGenDisabled} disabledTooltip="Función disponible solo con Gemini." />
                 <TabButton icon={<RolePlayIcon className="h-5 w-5"/>} label="Role-Play" isActive={activeTab === 'roleplay'} onClick={() => setActiveTab('roleplay')} />
                 <TabButton icon={<MicIcon className="h-5 w-5"/>} label="Analizar Audio" isActive={activeTab === 'audio'} onClick={() => setActiveTab('audio')} disabled={isAudioDisabled} disabledTooltip="El análisis de audio solo está disponible con Gemini." />
@@ -600,6 +627,32 @@ const AudioInput: React.FC<AudioInputProps> = ({ aiProvider, onAnalyze, onGenera
                             <FormLabel htmlFor="user-notes">Notas Adicionales (Opcional)</FormLabel>
                             <FormTextarea rows={3} id="user-notes" value={userNotes} onChange={(e) => setUserNotes(e.target.value)} placeholder="Añade detalles específicos que quieras ver en la simulación. Ej: 'el cliente está de viaje' o 'ya ha llamado dos veces antes'." />
                         </div>
+                    </div>
+                )}
+                {activeTab === 'knowledge' && (
+                    <div className="space-y-4">
+                        <FormLabel htmlFor="kb-query">Consulta a la Base de Conocimiento</FormLabel>
+                        <FormTextarea
+                            id="kb-query"
+                            rows={4}
+                            value={kbQuery}
+                            onChange={(e) => setKbQuery(e.target.value)}
+                            placeholder="Haz una pregunta sobre los productos o servicios de Bancolombia..."
+                            disabled={isQueryingKB}
+                        />
+                        
+                        {isQueryingKB && (
+                            <div className="flex justify-center items-center p-4">
+                                <div className="w-8 h-8 border-2 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
+                                <p className="ml-3 text-slate-500 dark:text-slate-400">Consultando...</p>
+                            </div>
+                        )}
+
+                        {kbAnswer && !isQueryingKB && (
+                            <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-md border border-slate-200 dark:border-slate-700">
+                                <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-wrap">{kbAnswer}</p>
+                            </div>
+                        )}
                     </div>
                 )}
                  {activeTab === 'roleplay' && (
@@ -768,6 +821,14 @@ const AudioInput: React.FC<AudioInputProps> = ({ aiProvider, onAnalyze, onGenera
                 ) : activeTab === 'scenario' ? (
                      <button onClick={handleGenerateCaseStudyClick} disabled={isLoading} className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-primary hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:opacity-50">
                         {isLoading ? 'Generando...' : 'Generar Escenario'}
+                    </button>
+                ) : activeTab === 'knowledge' ? (
+                    <button
+                        onClick={handleKbQuery}
+                        disabled={isQueryingKB || isLoading || !kbQuery.trim()}
+                        className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-primary hover:bg-brand-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-primary disabled:opacity-50"
+                    >
+                        {isQueryingKB ? 'Consultando...' : 'Consultar'}
                     </button>
                 ) : null}
             </div>

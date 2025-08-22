@@ -527,3 +527,27 @@ export const generateCaseStudy = async (
   
   return { data: caseStudy, tokenUsage };
 };
+
+export const queryKnowledgeBase = async (query: string): Promise<{ data: string; tokenUsage: TokenUsage }> => {
+    const knowledgeBase = `
+        **CONTEXTO DE PRODUCTOS BANCOLOMBIA:**
+        ${JSON.stringify(bancolombiaProductData, null, 2)}
+
+        **PREGUNTAS FRECUENTES (FAQs) BANCOLOMBIA:**
+        ${bancolombiaFaqData}
+    `;
+
+    const systemPrompt = `
+        Eres un asistente experto de Bancolombia. Tu única fuente de conocimiento es el contexto proporcionado a continuación.
+        Basa tus respuestas ESTRICTAMENTE en esta información. No inventes datos ni uses conocimiento externo.
+        Si la respuesta no se encuentra en el contexto, indica amablemente que no tienes esa información disponible.
+        Responde en español, de manera clara y concisa.
+        ---
+        ${knowledgeBase}
+        ---
+    `;
+
+    const fullPrompt = `El usuario pregunta: "${query}"`;
+
+    return callGenerativeModelForText(fullPrompt, systemPrompt);
+};

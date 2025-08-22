@@ -10,8 +10,8 @@ Una herramienta avanzada diseñada para profesionales de ventas que buscan perfe
 
 -   **Soporte Multi-IA**: Permite al usuario elegir entre diferentes modelos de lenguaje de última generación:
     -   **Google Gemini**: Integrado de forma nativa. Ideal para análisis de texto y audio, incluyendo métricas de tono. **No requiere configuración de API Key**.
-    -   **DeepSeek (via OpenRouter)**: Una alternativa potente para análisis de texto.
-    -   **ChatGPT (via OpenRouter)**: El reconocido modelo de OpenAI para un análisis de texto robusto.
+    -   **DeepSeek**: Una alternativa potente para análisis de texto, integrada con su API oficial.
+    -   **ChatGPT (OpenAI)**: El reconocido modelo de OpenAI para un análisis de texto robusto, integrado con su API oficial.
 
 -   **Análisis de Audio y Tono (Exclusivo de Gemini)**: Transcribe y analiza archivos de audio grabados o subidos, proporcionando métricas sobre la velocidad del habla (palabras por minuto) y el uso de muletillas.
 
@@ -42,7 +42,8 @@ Una herramienta avanzada diseñada para profesionales de ventas que buscan perfe
 -   **Frontend**: React, TypeScript, Tailwind CSS
 -   **Motores de IA**:
     -   `@google/genai` para la API nativa de Google Gemini.
-    -   API de OpenRouter para acceder a los modelos de DeepSeek y OpenAI.
+    -   API oficial de DeepSeek.
+    -   API oficial de OpenAI.
 -   **Visualización de Datos**: `recharts` para los gráficos de radar.
 -   **Generación de PDF**: `jspdf` y `html2canvas`.
 -   **APIs del Navegador**:
@@ -57,7 +58,7 @@ Esta aplicación está diseñada para funcionar como un proyecto estático. Pued
 ### Prerrequisitos
 
 1.  Un navegador web moderno (Chrome, Firefox, Edge).
-2.  (Opcional) Claves de API de OpenRouter si deseas utilizar DeepSeek o ChatGPT.
+2.  (Opcional) Claves de API de DeepSeek y/o OpenAI si deseas utilizar estos modelos.
 
 ### Configuración
 
@@ -83,9 +84,9 @@ window.google.accounts.id.initialize({
 #### 2. Claves de API de los Modelos de IA (Opcional)
 
 -   **Google Gemini**: ¡No se requiere configuración! La integración nativa funciona sin que necesites añadir una clave.
--   **DeepSeek y ChatGPT**: Para usar estos modelos, debes obtener una clave de API de [OpenRouter](https://openrouter.ai/keys) y añadirla a través del modal de "Ajustes" dentro de la propia aplicación.
+-   **DeepSeek y ChatGPT**: Para usar estos modelos, debes obtener una clave de API de sus respectivas plataformas oficiales ([DeepSeek](https://platform.deepseek.com/), [OpenAI](https://platform.openai.com/)) y añadirla a través del modal de "Ajustes" dentro de la propia aplicación.
 
-Las claves se guardan de forma segura en el `localStorage` de tu navegador y no se envían a ningún servidor externo, excepto para comunicarse directamente con la API de OpenRouter.
+Las claves se guardan de forma segura en el `localStorage` de tu navegador.
 
 ## 📁 Estructura del Proyecto
 

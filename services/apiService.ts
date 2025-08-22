@@ -126,3 +126,17 @@ export const generateCaseStudy = (
             return gemini.generateCaseStudy(problemType, userNotes);
     }
 };
+
+export const queryKnowledgeBase = (
+    provider: AiProvider,
+    apiKey: string, // Unused for Gemini, but kept for signature consistency
+    query: string
+): Promise<{ data: string; tokenUsage: TokenUsage; }> => {
+    switch (provider) {
+        // Currently, only Gemini supports this feature.
+        // Can be extended to other providers in the future.
+        case 'gemini':
+        default:
+            return gemini.queryKnowledgeBase(query);
+    }
+};

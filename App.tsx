@@ -25,8 +25,8 @@ const INITIAL_STATS = {
 };
 
 const INITIAL_API_KEYS: ApiKeys = {
-  deepseek: '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',
-  openai: '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',
+  deepseek: 'sk-98bdeb86a5f44a2a9eebe3c5acaa827e',
+  openai: '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',
 };
 
 const INITIAL_TOKEN_STATS: TokenUsageStats = {
@@ -116,18 +116,8 @@ const App: React.FC = () => {
 
 
   const handleLoginSuccess = (credentialResponse: any) => {
-    try {
-        const profileObject: any = jwtDecode(credentialResponse.credential);
-        setUserProfile({
-          id: profileObject.sub,
-          name: profileObject.name,
-          email: profileObject.email,
-          imageUrl: profileObject.picture,
-        });
-    } catch (error) {
-        console.error("Error decoding JWT: ", error);
-        setError("Hubo un problema al iniciar sesión. El token no es válido.");
-    }
+    // This function is currently not used as Google Sign-In is disabled.
+    // Kept for potential future re-integration.
   };
   
   const handleLogout = () => {
@@ -136,24 +126,8 @@ const App: React.FC = () => {
   }
 
   useEffect(() => {
-    if (window.google) {
-      try {
-        window.google.accounts.id.initialize({
-            // IMPORTANTE: Reemplaza este Client ID con el tuyo desde la Consola de Google Cloud.
-            // Para que funcione, debes añadir tu dominio (ej. http://localhost:3000) a los
-            // "Orígenes de JavaScript autorizados" en las credenciales de tu proyecto.
-            client_id: '446423243063-4tr7t2catft0ghjhtu5ovbgr6d7t6njh.apps.googleusercontent.com',
-            callback: handleLoginSuccess
-        });
-        window.google.accounts.id.renderButton(
-            document.getElementById("google-signin-button"),
-            { theme: "outline", size: "large", type: 'standard', text: 'signin_with' }
-        );
-      } catch (error) {
-          console.error("Error inicializando Google Sign-In:", error);
-          setError("No se pudo cargar el inicio de sesión con Google. Revisa el Client ID.");
-      }
-    }
+    // Google Sign-In is disabled due to invalid Client ID.
+    // This block is kept for potential future re-integration.
   }, []);
 
   const updateUserStats = (newStats: Partial<UserStats>) => {
@@ -217,7 +191,7 @@ const App: React.FC = () => {
     if (aiProvider !== 'gemini') {
       const currentApiKey = apiKeys[aiProvider as keyof ApiKeys];
       if (!currentApiKey) {
-        setError(`Por favor, añade tu clave de API de OpenRouter para ${aiProvider.charAt(0).toUpperCase() + aiProvider.slice(1)} en los ajustes para continuar.`);
+        setError(`Por favor, añade tu clave de API para ${aiProvider.charAt(0).toUpperCase() + aiProvider.slice(1)} en los ajustes para continuar.`);
         setIsSettingsOpen(true);
         return false;
       }
@@ -329,6 +303,20 @@ const App: React.FC = () => {
     }
   };
 
+  const handleQueryKnowledgeBase = async (query: string): Promise<string> => {
+    if (!checkApiKey()) return "Error: Falta la clave de API.";
+    const apiKey = aiProvider !== 'gemini' ? apiKeys[aiProvider as keyof ApiKeys] : '';
+    try {
+        const { data, tokenUsage } = await apiService.queryKnowledgeBase(aiProvider, apiKey, query);
+        if (tokenUsage) updateTokenUsage(tokenUsage);
+        return data;
+    } catch (err) {
+        console.error("Error querying knowledge base:", err);
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        return `Error al consultar la base de conocimiento: ${errorMessage}`;
+    }
+  }
+
 
   const handleGenerateScript = async (product: string, keyPoints: string, tone: string, channel: string): Promise<string> => {
     if (!checkApiKey()) return "Error: Falta la clave de API.";
@@ -420,7 +408,6 @@ const App: React.FC = () => {
                  </button>
              ) : (
                 <div className="flex items-center gap-2">
-                    <div id="google-signin-button"></div>
                     <button onClick={() => setIsSettingsOpen(true)} title="Abrir Ajustes" className="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
                          <UserIcon className="w-6 h-6 text-slate-600 dark:text-slate-300" />
                     </button>
@@ -444,6 +431,7 @@ const App: React.FC = () => {
                 onGenerateCaseStudy={handleGenerateCaseStudy}
                 onGetRolePlayResponse={handleGetRolePlayResponse}
                 onGetRolePlayMultipleChoiceTurn={handleGetRolePlayMultipleChoiceTurn}
+                onQueryKnowledgeBase={handleQueryKnowledgeBase}
                 onRolePlayStart={handleRolePlayStart}
                 isLoading={isLoading}
                 initialText={inputValue}
